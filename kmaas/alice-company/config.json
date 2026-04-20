@@ -1,0 +1,74 @@
+{
+  "tenants": [
+    {
+      "_desc": "Alice company",
+      "tenant_id": "025f02fe-bee2-444b-bf76-b5ead30327c0",
+      "kas": {
+        "enable": true,
+        "policy_enforcement": {
+          "enable": true,
+          "type": "opa_server",
+          "opa_server": {
+            "url": "https://pdp:8181/v1/data/alice/kas/allow",
+            "authentication": {
+              "type": "basic",
+              "user_id": "admin",
+              "password": "admin"
+            }
+          }
+        },
+        "authentication": [
+          {
+            "discovery_uri": "https://idp:8443/realms/sep-demo/.well-known/openid-configuration",
+            "client_id": "alice-company"
+          }
+        ]
+      },
+      "pki": {
+        "enable": false
+      },
+      "crypto_api": {
+        "enable": false
+      },
+      "kacls": {
+        "enable": false
+      },
+      "dke": {
+        "enable": false
+      },
+      "admin": {
+        "enable": false
+      }
+    }
+  ],
+  "authorization": [],
+  "port": 3000,
+  "kacls_url": "https://localhost:3000",
+  "persistence_type": "json_file",
+  "logs": {
+    "enable": true,
+    "formats": ["v2"],
+    "kinds": ["http", "domain", "system"],
+    "severities": ["crit", "err", "warning", "notice", "info"]
+  },
+  "jwt_supported_signing_algorithms": [
+    "RS256",
+    "RS384",
+    "RS512",
+    "ES256",
+    "ES384",
+    "ES512",
+    "PS256",
+    "PS384",
+    "PS512"
+  ],
+  "database": {
+    "enable": false
+  },
+  "https": {
+    "credentials": {
+      "key": "/usr/local/share/ca-certificates/sep-key.pem",
+      "cert": "/usr/local/share/ca-certificates/sep.pem"
+    }
+  }
+}

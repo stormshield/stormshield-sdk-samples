@@ -1,0 +1,22 @@
+{
+  "name": "base",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "encrypt": "node dist/2_encrypt.js",
+    "decrypt": "node dist/3_decrypt.js",
+    "pdp-denial": "node dist/4_pdp-denial.js",
+    "start": "tsx index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.17",
+    "tsx": "4.21.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "sdsdk": "file:sdsdk.tgz"
+  }
+}
