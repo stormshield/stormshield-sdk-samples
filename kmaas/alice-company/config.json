@@ -9,7 +9,7 @@
           "enable": true,
           "type": "opa_server",
           "opa_server": {
-            "url": "https://pdp:8181/v1/data/alice/kas/allow",
+            "url": "https://alice-company-pdp:8181/v1/data/alice/kas/allow",
             "authentication": {
               "type": "basic",
               "user_id": "admin",
@@ -19,7 +19,7 @@
         },
         "authentication": [
           {
-            "discovery_uri": "https://idp:8443/realms/sep-demo/.well-known/openid-configuration",
+            "discovery_uri": "https://alice-company-idp:8443/realms/sep-demo/.well-known/openid-configuration",
             "client_id": "alice-company"
           }
         ]
@@ -47,9 +47,21 @@
   "persistence_type": "json_file",
   "logs": {
     "enable": true,
-    "formats": ["v2"],
-    "kinds": ["http", "domain", "system"],
-    "severities": ["crit", "err", "warning", "notice", "info"]
+    "formats": [
+      "v2"
+    ],
+    "kinds": [
+      "http",
+      "domain",
+      "system"
+    ],
+    "severities": [
+      "crit",
+      "err",
+      "warning",
+      "notice",
+      "info"
+    ]
   },
   "jwt_supported_signing_algorithms": [
     "RS256",

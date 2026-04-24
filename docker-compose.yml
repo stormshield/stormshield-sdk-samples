@@ -4,11 +4,67 @@ x-kas-common: &kas_common
   image: stormshield/kmaas:4.6.0.309 # <-- update with your kmaas image
   environment:
     NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/rootCA.pem
+  profiles: [ "sep" ]
+
+x-keycloak: &keycloak
+  image: quay.io/keycloak/keycloak:26.0
+  command: [ "start-dev", "--import-realm" ]
+  environment:
+    KEYCLOAK_ADMIN: admin
+    KEYCLOAK_ADMIN_PASSWORD: admin
+    KC_HEALTH_ENABLED: true
+    KC_HTTPS_CERTIFICATE_FILE: /etc/x509/https/sep.pem
+    KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/x509/https/sep-key.pem
+  volumes:
+    - ./idp/realms:/opt/keycloak/data/import:ro
+    - certs_data:/etc/x509/https:ro
   depends_on:
     cert-generator:
       condition: service_completed_successfully
-    keycloak:
-      condition: service_healthy
+  healthcheck:
+    test:
+      [
+        "CMD-SHELL",
+        "[ -f /tmp/HealthCheck.java ] || echo \"public class HealthCheck {
+          public static void main(String[] args) throws Exception {
+          javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((s,sessio\
+          n)->true); javax.net.ssl.SSLContext sc =
+          javax.net.ssl.SSLContext.getInstance(\\\"TLS\\\"); sc.init(null, new
+          javax.net.ssl.TrustManager[]{new
+          javax.net.ssl.X509TrustManager(){public
+          java.security.cert.X509Certificate[] getAcceptedIssuers(){return
+          null;} public void
+          checkClientTrusted(java.security.cert.X509Certificate[] c, String a){}
+          public void checkServerTrusted(java.security.cert.X509Certificate[] c,
+          String a){}}}, new java.security.SecureRandom());
+          javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSoc\
+          ketFactory()); System.exit(java.net.HttpURLConnection.HTTP_OK ==
+          ((java.net.HttpURLConnection)new
+          java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 :
+          1);}}\" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java
+          https://localhost:9000/health/live",
+      ]
+    interval: 5s
+    timeout: 5s
+    retries: 30
+  profiles: [ "sep" ]
+
+x-pdp: &pdp
+  image: openpolicyagent/opa:1.15.2
+  command:
+    - "run"
+    - "--server"
+    - "--addr=0.0.0.0:8181"
+    - "--tls-cert-file=/certs/sep.pem"
+    - "--tls-private-key-file=/certs/sep-key.pem"
+    - --authentication=token
+    - --authorization=basic
+    - /policies/rules
+    - /policies/auth/authz.rego
+    - /policies/auth/data
+  depends_on:
+    cert-generator:
+      condition: service_completed_successfully
   profiles: [ "sep" ]
 
 services:
@@ -30,6 +86,11 @@ services:
     volumes:
       - ./kmaas/alice-company:/etc/stormshield/cse
       - certs_data:/usr/local/share/ca-certificates
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+      alice-company-idp:
+        condition: service_healthy
 
   bob-company-kmaas:
     <<: *kas_common
@@ -37,78 +98,35 @@ services:
     volumes:
       - ./kmaas/bob-company:/etc/stormshield/cse
       - certs_data:/usr/local/share/ca-certificates
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.0
-    container_name: idp
-    command: [ "start", "--import-realm" ]
-    environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HOSTNAME: idp
-      KC_HEALTH_ENABLED: true
-      KC_HTTPS_CERTIFICATE_FILE: /etc/x509/https/sep.pem
-      KC_HTTPS_CERTIFICATE_KEY_FILE: /etc/x509/https/sep-key.pem
-    ports:
-      - "8443:8443"
-    volumes:
-      - ./idp/realms:/opt/keycloak/data/import:ro
-      - certs_data:/etc/x509/https:ro
     depends_on:
       cert-generator:
         condition: service_completed_successfully
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "[ -f /tmp/HealthCheck.java ] || echo \"public class HealthCheck {
-            public static void main(String[] args) throws Exception {
-            javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((s,sess\
-            ion)->true); javax.net.ssl.SSLContext sc =
-            javax.net.ssl.SSLContext.getInstance(\\\"TLS\\\"); sc.init(null, new
-            javax.net.ssl.TrustManager[]{new
-            javax.net.ssl.X509TrustManager(){public
-            java.security.cert.X509Certificate[] getAcceptedIssuers(){return
-            null;} public void
-            checkClientTrusted(java.security.cert.X509Certificate[] c, String
-            a){} public void
-            checkServerTrusted(java.security.cert.X509Certificate[] c, String
-            a){}}}, new java.security.SecureRandom());
-            javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getS\
-            ocketFactory()); System.exit(java.net.HttpURLConnection.HTTP_OK ==
-            ((java.net.HttpURLConnection)new
-            java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 :
-            1);}}\" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java
-            https://localhost:9000/health/live",
-        ]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-    profiles: [ "sep" ]
+      bob-company-idp:
+        condition: service_healthy
 
-  pdp:
-    image: openpolicyagent/opa:1.15.2
-    container_name: pdp
-    command:
-      - "run"
-      - "--server"
-      - "--addr=0.0.0.0:8181"
-      - "--tls-cert-file=/certs/sep.pem"
-      - "--tls-private-key-file=/certs/sep-key.pem"
-      - --authentication=token
-      - --authorization=basic
-      - /policies/rules
-      - /policies/auth/authz.rego
-      - /policies/auth/data
-    ports:
-      - "8181:8181"
+  alice-company-idp:
+    <<: *keycloak
+    volumes:
+      - ./idp/alice-company:/opt/keycloak/data/import:ro
+      - certs_data:/etc/x509/https:ro
+
+  bob-company-idp:
+    <<: *keycloak
+    volumes:
+      - ./idp/bob-company:/opt/keycloak/data/import:ro
+      - certs_data:/etc/x509/https:ro
+
+  alice-company-pdp:
+    <<: *pdp
     volumes:
       - certs_data:/certs
-      - ./pdp/policies:/policies
-    depends_on:
-      cert-generator:
-        condition: service_completed_successfully
-    profiles: [ "sep" ]
+      - ./pdp/alice-company:/policies
+
+  bob-company-pdp:
+    <<: *pdp
+    volumes:
+      - certs_data:/certs
+      - ./pdp/bob-company:/policies
 
   cert-generator:
     image: alpine/mkcert
@@ -118,8 +136,8 @@ services:
       CAROOT: /certs
     command: >
       "mkcert -cert-file /certs/sep.pem -key-file /certs/sep-key.pem localhost
-      idp pdp bob-company-kmaas alice-company-kmaas && chmod -R 644
-      /certs/*.pem"
+      bob-company-idp alice-company-idp bob-company-pdp alice-company-pdp
+      bob-company-kmaas alice-company-kmaas && chmod -R 644 /certs/*.pem"
     volumes:
       - certs_data:/certs
     restart: "no"

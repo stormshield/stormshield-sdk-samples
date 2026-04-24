@@ -35,7 +35,12 @@ export const sdsdk = new Sdsdk({
       url: "https://bob-company-kmaas:3000/api/v1/b0c6c055-8e61-4cde-ae08-c20a3d9ea3d8/kas",
       authentication: {
         type: "bearer",
-        value: await loadBasicToken("bob-company", "leon.weber", "password"),
+        value: await loadBasicToken(
+          "bob-company-idp",
+          "bob-company",
+          "leon.weber",
+          "password",
+        ),
       },
       publicKey: {
         kid: "f19484ec-3fa2-4603-8de4-afc51d762d30",

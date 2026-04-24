@@ -37,7 +37,12 @@ export const sdsdk = new Sdsdk({
       },
       authentication: {
         type: "bearer",
-        value: await loadBasicToken("alice-company", "jean.martin", "password"),
+        value: await loadBasicToken(
+          "alice-company-idp",
+          "alice-company",
+          "jean.martin",
+          "password",
+        ),
       },
     },
     {
@@ -50,7 +55,12 @@ export const sdsdk = new Sdsdk({
       },
       authentication: {
         type: "bearer",
-        value: await loadBasicToken("bob-company", "finn.fischer", "password"),
+        value: await loadBasicToken(
+          "bob-company-idp",
+          "bob-company",
+          "finn.fischer",
+          "password",
+        ),
       },
     },
   ],
@@ -81,6 +91,7 @@ export const sdsdk = new Sdsdk({
 });
 
 export async function loadBasicToken(
+  host: string,
   clientId: string,
   userName: string,
   password: string,
@@ -93,7 +104,7 @@ export async function loadBasicToken(
   }).toString();
 
   const response = await fetch(
-    "https://idp:8443/realms/sep-demo/protocol/openid-connect/token",
+    `https://${host}:8443/realms/sep-demo/protocol/openid-connect/token`,
     {
       method: "POST",
       headers: {

@@ -5,49 +5,6 @@
   "verifyEmail": false,
   "clients": [
     {
-      "clientId": "alice-company",
-      "name": "alice-company OIDC Application",
-      "publicClient": true,
-      "protocol": "openid-connect",
-      "redirectUris": [
-        "http://127.0.0.1:8999/*",
-        "http://localhost:9000/callback"
-      ],
-      "webOrigins": ["*"],
-      "standardFlowEnabled": true,
-      "implicitFlowEnabled": true,
-      "directAccessGrantsEnabled": true,
-      "serviceAccountsEnabled": false,
-      "authorizationServicesEnabled": false,
-      "protocolMappers": [
-        {
-          "name": "client-id-access-token-audience",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-audience-mapper",
-          "consentRequired": false,
-          "config": {
-            "included.client.audience": "alice-company",
-            "id.token.claim": "false",
-            "access.token.claim": "true"
-          }
-        },
-        {
-          "name": "User team",
-          "protocol": "openid-connect",
-          "protocolMapper": "oidc-usermodel-attribute-mapper",
-          "consentRequired": false,
-          "config": {
-            "user.attribute": "team",
-            "claim.name": "team",
-            "jsonType.label": "String",
-            "multivalued": "false",
-            "id.token.claim": "true",
-            "access.token.claim": "true"
-          }
-        }
-      ]
-    },
-    {
       "clientId": "bob-company",
       "name": "bob-company OIDC Application",
       "publicClient": true,
@@ -92,24 +49,6 @@
     }
   ],
   "users": [
-    {
-      "username": "jean.martin",
-      "enabled": true,
-      "emailVerified": true,
-      "firstName": "Jean",
-      "lastName": "Martin",
-      "email": "jean.martin@alice-company.com",
-      "attributes": {
-        "team": "finance"
-      },
-      "credentials": [
-        {
-          "type": "password",
-          "value": "password",
-          "temporary": false
-        }
-      ]
-    },
     {
       "username": "finn.fischer",
       "enabled": true,
