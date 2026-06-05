@@ -4,11 +4,11 @@ x-kas-common: &kas_common
   image: stormshield/kmaas:4.6.0.309 # <-- update with your kmaas image
   environment:
     NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/rootCA.pem
-  profiles: [ "sep" ]
+  profiles: ["sep"]
 
 x-keycloak: &keycloak
   image: quay.io/keycloak/keycloak:26.0
-  command: [ "start-dev", "--import-realm" ]
+  command: ["start-dev", "--import-realm"]
   environment:
     KEYCLOAK_ADMIN: admin
     KEYCLOAK_ADMIN_PASSWORD: admin
@@ -22,32 +22,31 @@ x-keycloak: &keycloak
     cert-generator:
       condition: service_completed_successfully
   healthcheck:
-    test:
-      [
+    test: [
         "CMD-SHELL",
         "[ -f /tmp/HealthCheck.java ] || echo \"public class HealthCheck {
-          public static void main(String[] args) throws Exception {
-          javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((s,sessio\
-          n)->true); javax.net.ssl.SSLContext sc =
-          javax.net.ssl.SSLContext.getInstance(\\\"TLS\\\"); sc.init(null, new
-          javax.net.ssl.TrustManager[]{new
-          javax.net.ssl.X509TrustManager(){public
-          java.security.cert.X509Certificate[] getAcceptedIssuers(){return
-          null;} public void
-          checkClientTrusted(java.security.cert.X509Certificate[] c, String a){}
-          public void checkServerTrusted(java.security.cert.X509Certificate[] c,
-          String a){}}}, new java.security.SecureRandom());
-          javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSoc\
-          ketFactory()); System.exit(java.net.HttpURLConnection.HTTP_OK ==
-          ((java.net.HttpURLConnection)new
-          java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 :
-          1);}}\" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java
-          https://localhost:9000/health/live",
+        public static void main(String[] args) throws Exception {
+        javax.net.ssl.HttpsURLConnection.setDefaultHostnameVerifier((s,sessio\
+        n)->true); javax.net.ssl.SSLContext sc =
+        javax.net.ssl.SSLContext.getInstance(\\\"TLS\\\"); sc.init(null, new
+        javax.net.ssl.TrustManager[]{new
+        javax.net.ssl.X509TrustManager(){public
+        java.security.cert.X509Certificate[] getAcceptedIssuers(){return
+        null;} public void
+        checkClientTrusted(java.security.cert.X509Certificate[] c, String a){}
+        public void checkServerTrusted(java.security.cert.X509Certificate[] c,
+        String a){}}}, new java.security.SecureRandom());
+        javax.net.ssl.HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSoc\
+        ketFactory()); System.exit(java.net.HttpURLConnection.HTTP_OK ==
+        ((java.net.HttpURLConnection)new
+        java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 :
+        1);}}\" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java
+        https://localhost:9000/health/live",
       ]
     interval: 5s
     timeout: 5s
     retries: 30
-  profiles: [ "sep" ]
+  profiles: ["sep"]
 
 x-pdp: &pdp
   image: openpolicyagent/opa:1.15.2
@@ -65,7 +64,7 @@ x-pdp: &pdp
   depends_on:
     cert-generator:
       condition: service_completed_successfully
-  profiles: [ "sep" ]
+  profiles: ["sep"]
 
 services:
   example-base:
@@ -78,7 +77,19 @@ services:
     environment:
       NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/rootCA.pem
     container_name: base-examples
-    profiles: [ "example-base" ]
+    profiles: ["example-base"]
+
+  example-quick-start:
+    build:
+      context: .
+      dockerfile: ./examples/quick-start/Dockerfile
+    volumes:
+      - certs_data:/usr/local/share/ca-certificates
+      - ./examples/quick-start/data:/app/data
+    environment:
+      NODE_EXTRA_CA_CERTS: /usr/local/share/ca-certificates/rootCA.pem
+    container_name: quick-start-examples
+    profiles: ["example-quick-start"]
 
   alice-company-kmaas:
     <<: *kas_common
@@ -131,7 +142,7 @@ services:
   cert-generator:
     image: alpine/mkcert
     container_name: cert-generator
-    entrypoint: [ "sh", "-c" ]
+    entrypoint: ["sh", "-c"]
     environment:
       CAROOT: /certs
     command: >
@@ -141,7 +152,7 @@ services:
     volumes:
       - certs_data:/certs
     restart: "no"
-    profiles: [ "sep" ]
+    profiles: ["sep"]
 
 volumes:
   certs_data:

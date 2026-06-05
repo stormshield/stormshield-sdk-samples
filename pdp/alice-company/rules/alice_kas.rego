@@ -13,3 +13,7 @@ allow if {
     some attribute in input.policy.body.dataAttributes
     attribute.team == input.authentication.customClaims.team
 }
+
+allow if {
+    input.endpoint in ["kas/encrypt", "kas/decrypt"]
+}

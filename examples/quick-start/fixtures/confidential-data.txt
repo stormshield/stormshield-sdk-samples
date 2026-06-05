@@ -1,0 +1,7 @@
+[database]
+host = localhost
+port = 5432
+name = myapp_db
+username = db_admin
+password = fcezsoihc7oiugd==µ
+schema = public
